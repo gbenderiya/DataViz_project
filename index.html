@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>U.S. Atlas TopoJSON Map with County Pop-up</title>
+  <style>
+    .popup {
+      position: absolute;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      z-index: 1000;
+    }
+    .county-map {
+      width: 400px;
+      height: 300px;
+    }
+    .popup a {
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+  </style>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script> 
+</head>
+<body>
+  <svg id="map" width="975" height="610"></svg>
+  <div id="popup" class="popup" style="display: none;"></div>
+
+  <script>
+    // Define zoomable 
+    function zoomable(selection) {
+      const zoom = d3.zoom()
+        .scaleExtent([0.5, 8])
+        .on("zoom", function(event) {
+          selection.selectAll("path")
+            .attr("transform", event.transform);
+          selection.selectAll("text")
+            .attr("transform", event.transform)
+            .attr("font-size", function() {
+              const fontSize = 10 / Math.sqrt(event.transform.k);
+              return fontSize + "px";
+            });
+        });
+
+      selection.call(zoom);
+    }
+
+    // Load the data
+    d3.json("counties-albers-10m.json").then(function(us) {
+      console.log("Data loaded:", us); 
+
+      var path = d3.geoPath();
+      
+      var states = d3.select("#map").selectAll(".state")
+        .data(topojson.feature(us, us.objects.states).features)
+        .enter().append("path")
+        .attr("class", "state")
+        .attr("d", path)
+        .attr("fill", "none")
+        .attr("stroke", "black");
+
+      var counties = d3.select("#map").selectAll(".county")
+        .data(topojson.feature(us, us.objects.counties).features)
+        .enter().append("path")
+        .attr("class", "county")
+        .attr("d", path)
+        .attr("fill","#C8A2C8"); 
+
+      counties.on("click", function(event, d) {
+        var centroid = path.centroid(d);
+        var x = centroid[0] + window.pageXOffset;
+        var y = centroid[1] + window.pageYOffset;
+
+        var encodedCountyName = encodeURIComponent(d.properties.name);
+
+        var url = "county.html?county=" + encodedCountyName;
+
+        var popup = d3.select("#popup");
+        popup.style("left", x + "px")
+            .style("top", y + "px")
+            .style("display", "block")
+            .html("State: " + d.properties.state + "<br/>County: " + d.properties.name);
+
+        var detailsLink = popup.append("a")
+                              .attr("href", url)
+                              .text("View Details");
+
+        popup.append("br");
+
+        var countyMap = popup.append("svg")
+                             .attr("class", "county-map")
+                             .attr("width", 400)
+                             .attr("height", 300)
+                             .style("position", "absolute")
+                             .style("left", "calc(100% + 10px)")
+                             .style("top", 0)
+                             .append("g")
+                             .attr("transform", "translate(20,20)");
+
+        countyMap.append("path")
+                 .datum(d)
+                 .attr("d", path)
+                 .attr("fill", "steelblue");
+      });
+
+      d3.select("#map").append("path")
+        .datum(topojson.feature(us, us.objects.nation))
+        .attr("d", path)
+        .attr("fill", "none")
+        .attr("stroke", "black");
+
+      const map = d3.select("#map");
+      zoomable(map);
+    }).catch(function(error) {
+      console.error("Error loading data:", error);
+    });
+  </script>
+</body>
+</html>
