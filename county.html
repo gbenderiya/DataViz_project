@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>County Details</title>
   <style>
+    /* Ensure full viewport coverage */
     body {
       margin: 0;
     }
@@ -39,20 +40,18 @@
       const county = topojson.feature(us, us.objects.counties).features.find(function(d) {
         return d.properties.name === decodeURIComponent(countyName);
       });
-      console.log("Selected County:", county); 
+      console.log("Selected County:", county); // Debugging: Log selected county to console
 
       // Modify the SVG element
       const countyMap = d3.select("#county-map")
-        .attr("viewBox", "0 0 600 1600") 
-        .attr("width", "100%") 
-        .attr("height", "100%") 
+        .attr("viewBox", [0, 0, 975, 610])
         .attr("preserveAspectRatio", "xMidYMid meet")
         .classed("county-map", true);
 
       // Modify the containing div
       const countyMapContainer = d3.select("#county-map-container")
-        .style("width", "5000px")
-        .style("height", "5000px");
+        .style("width", "100%")
+        .style("height", "100%");
 
       const g = countyMap.append("g");
 
