@@ -2,119 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>U.S. Map</title>
+  <meta viewport="width=device-width, initial-scale=1.0">
+  <title>Map Zoom</title>
   <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    
     .popup {
       position: absolute;
       background-color: white;
       border: 1px solid #ccc;
       padding: 10px;
       z-index: 1000;
+      display: none;
     }
-    .county-map {
-      width: 400px;
-      height: 300px;
+    .county {
+      fill: #6ECF68;
+      stroke: #444;
+      stroke-width: 0.5;
+      transition: fill 0.75s ease-in-out;
     }
-    .popup a {
-      display: inline-block;
-      margin-bottom: 5px;
+    .highlighted {
+      fill: #F2D729;
+    }
+    .state {
+      fill: none;
+      stroke: #444;
+    }
+    #zoomOutButton {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      z-index: 1;
     }
   </style>
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="https://unpkg.com/topojson-client@3"></script> 
+  <script src="https://unpkg.com/topojson-client@3"></script>
 </head>
 <body>
+  <button id="zoomOutButton">Zoom Out</button> <!-- Button to trigger zooming out -->
   <svg id="map" width="975" height="610"></svg>
-  <div id="popup" class="popup" style="display: none;"></div>
+  <div id="popup" class="popup"></div>
 
   <script>
-    // Define zoomable 
-    function zoomable(selection) {
-      const zoom = d3.zoom()
-        .scaleExtent([0.5, 8])
-        .on("zoom", function(event) {
-          selection.selectAll("path")
-            .attr("transform", event.transform);
-          selection.selectAll("text")
-            .attr("transform", event.transform)
-            .attr("font-size", function() {
-              const fontSize = 10 / Math.sqrt(event.transform.k);
-              return fontSize + "px";
-            });
-        });
+    const svg = d3.select("#map"),
+          width = +svg.attr("width"),
+          height = +svg.attr("height"),
+          popup = d3.select("#popup");
+          zoomOutButton = document.getElementById("zoomOutButton");
+    
+    // D3 zoom function
+    const zoom = d3.zoom()
+      .scaleExtent([1, 8])
+      .on("zoom", (event) => svg.selectAll("path").attr("transform", event.transform));
 
-      selection.call(zoom);
-    }
+    svg.call(zoom);
+
+    // Event listener to the zoom out button to reset the zoom
+    zoomOutButton.addEventListener("click", function() {
+      svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity); // Reset zoom
+      svg.selectAll(".county").classed("highlighted", false);
+      popup.style("display", "none");
+    });
 
     // Load the data
-    d3.json("counties-albers-10m.json").then(function(us) {
-      console.log("Data loaded:", us); 
+    d3.json("counties-albers-10m.json").then(us => {
+      const path = d3.geoPath();
 
-      var path = d3.geoPath();
-      
-      var states = d3.select("#map").selectAll(".state")
-        .data(topojson.feature(us, us.objects.states).features)
-        .enter().append("path")
-        .attr("class", "state")
-        .attr("d", path)
-        .attr("fill", "none")
-        .attr("stroke", "black");
-
-      var counties = d3.select("#map").selectAll(".county")
+      // Bind counties data to paths
+      const counties = svg.selectAll(".county")
         .data(topojson.feature(us, us.objects.counties).features)
         .enter().append("path")
-        .attr("class", "county")
-        .attr("d", path)
-        .attr("fill","#C8A2C8"); 
-
-      counties.on("click", function(event, d) {
-        var centroid = path.centroid(d);
-        var x = centroid[0] + window.pageXOffset;
-        var y = centroid[1] + window.pageYOffset;
-
-        var encodedCountyName = encodeURIComponent(d.properties.name);
-
-        var url = "county.html?county=" + encodedCountyName;
-
-        var popup = d3.select("#popup");
-        popup.style("left", x + "px")
-            .style("top", y + "px")
-            .style("display", "block")
-            .html("State: " + d.properties.state + "<br/>County: " + d.properties.name);
-
-        var detailsLink = popup.append("a")
-                              .attr("href", url)
-                              .text("View Details");
-
-        popup.append("br");
-
-        var countyMap = popup.append("svg")
-                             .attr("class", "county-map")
-                             .attr("width", 400)
-                             .attr("height", 300)
-                             .style("position", "absolute")
-                             .style("left", "calc(100% + 10px)")
-                             .style("top", 0)
-                             .append("g")
-                             .attr("transform", "translate(20,20)");
-
-        countyMap.append("path")
-                 .datum(d)
-                 .attr("d", path)
-                 .attr("fill", "steelblue");
+          .attr("class", "county")
+          .attr("d", path)
+          .each(function(d) { // title for hover tooltip
+            d3.select(this).append("title").text(d => `State: ${d.properties.state}\nCounty: ${d.properties.name}`);
+          });
+      
+      // Bind states data to paths
+      svg.selectAll(".state")
+        .data(topojson.feature(us, us.objects.states).features)
+        .enter().append("path")
+          .attr("class", "state")
+          .attr("d", path);
+      
+      // Add click event to counties for zooming and highlighting
+      counties.on("click", (event, d) => {
+        zoomToFeature(d, path);
+        svg.selectAll(".county").classed("highlighted", false);
+        d3.select(event.currentTarget).classed("highlighted", true);
+        popup.style("display", "none"); // hide the popup
+        event.stopPropagation(); 
       });
+      
+      // Function to zoom into a feature (county/state)
+      function zoomToFeature(feature, path) {
+        const bounds = path.bounds(feature),
+              dx = bounds[1][0] - bounds[0][0],
+              dy = bounds[1][1] - bounds[0][1],
+              x = (bounds[0][0] + bounds[1][0]) / 2,
+              y = (bounds[0][1] + bounds[1][1]) / 2,
+              scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
+              translate = [width / 2 - scale * x, height / 2 - scale * y];
 
-      d3.select("#map").append("path")
-        .datum(topojson.feature(us, us.objects.nation))
-        .attr("d", path)
-        .attr("fill", "none")
-        .attr("stroke", "black");
-
-      const map = d3.select("#map");
-      zoomable(map);
-    }).catch(function(error) {
-      console.error("Error loading data:", error);
+        svg.transition().duration(750)
+           .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+      }
     });
   </script>
 </body>
