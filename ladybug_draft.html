@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ladybug Drawing in D3.js</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <svg width="600" height="300"></svg>
+
+  <script>
+    const svg = d3.select("svg");
+
+    // title
+    svg.append("text")
+      .attr("x", 350) // Centered horizontally
+      .attr("y", 20)  // Positioned at the top
+      .attr("text-anchor", "middle")
+      .attr("font-size", "20px")
+      .attr("fill", "black")
+      .text("Interesting fact about ladybug");
+
+    // ladybug body
+    svg.append("circle")
+      .attr("cx", 100)
+      .attr("cy", 150)
+      .attr("r", 60)
+      .attr("fill", "red");
+
+    // ladybug spots
+    const spotsData = [
+      { cx: 65, cy: 120 },
+      { cx: 100, cy: 130 },
+      { cx: 135, cy: 120 },
+      { cx: 80, cy: 150 },
+      { cx: 120, cy: 150 },
+      { cx: 65, cy: 180 },
+      { cx: 135, cy: 180 },
+    ];
+
+    svg.selectAll(".spot")
+      .data(spotsData)
+      .enter().append("circle")
+      .attr("class", "spot")
+      .attr("cx", d => d.cx)
+      .attr("cy", d => d.cy)
+      .attr("r", 10)
+      .attr("fill", "black");
+
+    // ladybug head
+    svg.append("ellipse")
+      .attr("cx", 100)
+      .attr("cy", 90)
+      .attr("rx", 30)
+      .attr("ry", 20)
+      .attr("fill", "black");
+
+    //  ladybug eyes
+    svg.append("circle")
+      .attr("cx", 85)
+      .attr("cy", 80)
+      .attr("r", 5)
+      .attr("fill", "white");
+
+    svg.append("circle")
+      .attr("cx", 115)
+      .attr("cy", 80)
+      .attr("r", 5)
+      .attr("fill", "white");
+
+    // horizontal line in body
+    svg.append("line")
+      .attr("x1", 100)
+      .attr("y1", 100)
+      .attr("x2", 100)
+      .attr("y2", 210)
+      .attr("stroke", "black")
+      .attr("stroke-width", 4);
+
+    // ladybug antennas
+    svg.append("line")
+      .attr("x1", 100)
+      .attr("y1", 70)
+      .attr("x2", 80)
+      .attr("y2", 30)
+      .attr("stroke", "black")
+      .attr("stroke-width", 2);
+
+    svg.append("line")
+      .attr("x1", 100)
+      .attr("y1", 70)
+      .attr("x2", 120)
+      .attr("y2", 30)
+      .attr("stroke", "black")
+      .attr("stroke-width", 2);
+
+   //data labels
+const sentences = [
+  "Good Luck Symbol",
+  "Voracious Predators",
+  "Hibernate in Clusters",
+  "Variety - 450 in North America",
+  "Beneficial to Agriculture"
+];
+
+   //data for pie chart
+const pieData = [10, 20, 30, 40, 50];
+
+// custom colors based on the ladybugs color
+const colors = ["shinyblack", "yellow", "brown", "orange", "red"];
+
+// Create a pie chart
+const pie = d3.pie()(pieData);
+
+// an arc
+const arc = d3.arc()
+  .innerRadius(0)
+  .outerRadius(60);
+
+// an outer arc
+const outerArc = d3.arc()
+  .innerRadius(70)
+  .outerRadius(80);
+
+// group for the pie chart
+const pieGroup = svg.append("g")
+  .attr("transform", "translate(350, 200)");
+
+//arcs 
+pieGroup.selectAll("path")
+  .data(pie)
+  .enter().append("path")
+  .attr("d", arc)
+  .attr("fill", (d, i) => colors[i]);
+
+// data labels
+const labelGroup = svg.append("g")
+  .attr("class", "labels");
+
+const polylineGroup = svg.append("g")
+  .attr("class", "polylines");
+
+pieGroup.selectAll("text")
+  .data(pie)
+  .enter().append("text")
+  .text((d, i) => sentences[i]) 
+  .attr("transform", d => {
+    const pos = outerArc.centroid(d);
+    return `translate(${pos})`;
+  })
+  .attr("text-anchor", d => {
+    return (d.startAngle + d.endAngle) / 2 > Math.PI ? "end" : "start";
+  })
+  .attr("font-size", "12px")
+  .attr("fill", "black");
+
+// slices to labels
+pieGroup.selectAll("polyline")
+  .data(pie)
+  .enter().append("polyline")
+  .attr("points", d => {
+    const pos = outerArc.centroid(d);
+    const posLine = arc.centroid(d);
+    const endPosLine = [(posLine[0] + pos[0]) / 2, (posLine[1] + pos[1]) / 2];
+    return [arc.centroid(d), pos, endPosLine];
+  })
+  .attr("fill", "none")
+  .attr("stroke", "black");
+
+  </script>
+</body>
+</html>
