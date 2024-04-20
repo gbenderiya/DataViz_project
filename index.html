@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta viewport="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+  <title>Animal Knowledge Map</title>
+  <style>
+    body {
+      height: 100vh;
+      background-color: #2f5597;
+      position: relative;
+      margin: 0;
+      flex-direction: column;
+      display: flex;
+    } 
+    
+    .popup {
+      position: absolute;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .state {
+      fill: #C8A2C8;
+      stroke: #444;
+    }
+    .animal-images {
+      position: relative;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    #ladybug {
+        top: 10%; 
+        left: 5%; 
+    }
+
+    #bee {
+        top: 30%; 
+        left: 5%; 
+    }
+
+    #snake {
+        top: 50%; 
+        left: 5%; 
+    }
+
+    #turtle {
+        top: 70%; 
+        left: 5%;
+    }
+
+    #info-box {
+      position: absolute;
+      width: 5;
+      height: 7;
+    }
+
+    .blank-square {
+      position: absolute; 
+      top: 30%; 
+      left: 24%;
+      transform: translate(-50%, -50%); /* Center the transformation */
+      width: 130px;
+      height: 130px;
+      border: 5px solid white;
+      border-radius: 25px;
+    }
+
+    .inside-square {
+      position: absolute !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      z-index: 10 !important;
+    }
+
+    .animal-images img {
+      position: absolute;
+      width: 100px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .styled-button {
+      background-color: #C8A2C8;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    .styled-button:hover {
+      background-color: #905890;
+    }
+
+
+    header {
+      padding: 0.5em;
+      box-sizing: border-box;
+      margin-top: 10px;
+      margin-left: 20px;
+    }
+
+    h1 {
+      font-family: 'Comic Neue', cursive;
+      color: #FF4E50;
+      font-size: 3em;
+      text-shadow: 2px 2px #444; 
+      margin: 0; 
+      flex-grow: 1;
+      text-align:left;
+    }
+
+    #map {
+      position: absolute;
+      top: 55%; 
+      left: calc(100px + 50px + 275px + 80px);
+      transform: translateY(-50%); 
+      width: 975px; 
+      height: 610px; 
+      z-index: 1; 
+    }
+
+  </style>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let lastDraggedImage = null;
+
+      const originalPositions = {
+          'ladybug': { top: '10%', left: '5%' },
+          'bee': { top: '30%', left: '5%' },
+          'snake': { top: '50%', left: '5%' },
+          'turtle': { top: '70%', left: '5%' }
+      };
+      const animalImages = document.querySelectorAll('.animal-images img');
+      const dropZone = document.querySelector('.blank-square');
+      const snakeFrame = document.getElementById('snakeFrame');
+
+      // Store initial positions
+      animalImages.forEach(img => {
+        img.addEventListener('dragstart', handleDragStart);
+        img.addEventListener('dragover', handleDragOver);
+        img.addEventListener('drop', handleDrop);
+      });
+
+      function handleDragStart(e) {
+        lastDraggedImage = e.target;
+        e.dataTransfer.setData('text/plain', e.target.id);
+      }
+
+      function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const draggableElement = document.getElementById(id);
+
+            const dropRect = dropZone.getBoundingClientRect();
+            const imgRect = draggableElement.getBoundingClientRect();
+
+            // Calculate position as a percentage of the drop zone dimensions
+            const desiredTop = dropRect.top + dropRect.height * -0.45;
+            const desiredLeft = dropRect.left + dropRect.width * 0.10;
+
+            // Set the image to be at the calculated position
+            draggableElement.style.position = 'absolute';
+            draggableElement.style.left = `${desiredLeft}px`;
+            draggableElement.style.top = `${desiredTop}px`;
+
+            // Check if there's a lastDraggedImage and it's not the current one
+            if (lastDraggedImage && lastDraggedImage !== draggableElement) {
+                lastDraggedImage.style.position = 'absolute';
+                lastDraggedImage.style.left = `${imagePositions[lastDraggedImage.id].x}px`;
+                lastDraggedImage.style.top = `${imagePositions[lastDraggedImage.id].y}px`;
+                lastDraggedImage.classList.remove('inside-square');
+            }
+
+            // Show the iframe if the dropped image is the snake
+            if (id === 'snake') {
+                snakeFrame.style.display = 'block';
+                snakeDensityFrame.style.display = 'block';
+                snakeFrame.src = snakeFrame.src;
+            } else if (id === 'ladybug'){
+                ladyBugDensityFrame.style.display = 'block';
+                LadybugFrame.style.display = 'block';
+                LadybugFrame.src = LadybugFrame.src;
+            } else if (id === 'bee'){
+                beeDensityFrame.style.display = 'block';
+                beeBarFrame.style.display = 'block';
+                beeBarFrame.src = beeBarFrame.src;
+            } else if (id === 'turtle'){
+                turtleTreemapFrame.style.display = 'block';
+                turtleDensityFrame.style.display = 'block';
+                turtleTreemapFrame.src = turtleTreemapFrame.src;
+            }
+        }
+
+      dropZone.addEventListener('dragover', handleDragOver);
+      dropZone.addEventListener('drop', handleDrop);
+
+      // Function to reset all animal images to their original positions
+      function resetAnimals() {
+        animalImages.forEach(img => {
+          img.style.position = 'absolute';
+          img.style.top = originalPositions[img.id].top;
+          img.style.left = originalPositions[img.id].left;
+          img.classList.remove('inside-square'); 
+        });
+        snakeFrame.style.display = 'none';
+        LadybugFrame.style.display = 'none';
+        beeBarFrame.style.display = 'none';
+        turtleTreemapFrame.style.display = 'none';
+        beeDensityFrame.style.display = 'none';
+        ladyBugDensityFrame.style.display = 'none';
+        snakeDensityFrame.style.display = 'none';
+        turtleDensityFrame.style.display = 'none';
+
+      }
+      // Event listener for the reset button
+      document.getElementById('resetButton').addEventListener('click', resetAnimals);
+    });
+    </script>
+
+</head>
+<body>
+  <header>
+    <h1>Animal visualizations in action</h1>
+  </header>
+  <!-- Animal images -->
+  <div class="animal-images">
+    <img src="img/ladybug.png" id="ladybug" alt="Ladybug" draggable="true">
+    <img src="img/bee.png" id="bee" alt="Bee" draggable="true">
+    <img src="img/snake.png" id="snake" alt="Snake" draggable="true">
+    <img src="img/turtle.png" id="turtle" alt="Turtle" draggable="true">
+  </div>
+  <iframe id="snakeFrame" src="snake-line.html" style="width: 70vw; height: 40vh; position: absolute; top: 335px; left: 200px; border:none; display:none;"></iframe>
+  <iframe id="LadybugFrame" src="ladybug-pie.html" style="width: 60vw; height: 40vh; position: absolute; top: 350px; left: 200px; border:none;display:none;"></iframe>
+  <iframe id="beeBarFrame" src="bee-bar.html" style="width: 60vw; height: 40vh; position: absolute; top: 350px; left: 155px; border:none;display:none;"></iframe>
+  <iframe id="turtleTreemapFrame" src="turtle-treemap.html" style="width: 60vw; height: 40vh; position: absolute; top: 350px; left: 155px; border:none;display:none;"></iframe>
+  <iframe id="beeDensityFrame" src="bee-density.html" style="width: 975px; height: 610px; position: absolute; top: 11%; left: calc(100px + 60px + 260px + 80px); z-index: 2000; border:none;display:none;"></iframe>
+  <iframe id="ladyBugDensityFrame" src="ladybug-density.html" style="width: 975px; height: 610px; position: absolute; top: 11%; left: calc(100px + 60px + 260px + 80px); z-index: 2000; border:none;display:none;"></iframe>
+  <iframe id="snakeDensityFrame" src="snake-density.html" style="width: 975px; height: 610px; position: absolute; top: 11%; left: calc(100px + 60px + 260px + 80px); z-index: 2000; border:none;display:none;"></iframe>
+  <iframe id="turtleDensityFrame" src="turtle-density.html" style="width: 975px; height: 610px; position: absolute; top: 11%; left: calc(100px + 60px + 260px + 80px); z-index: 2000; border:none;display:none;"></iframe>
+  
+  <div class="blank-square"></div>
+  <button id="resetButton" class="styled-button" style="position: absolute; left: 24%; transform: translateX(-50%); top: 40%;">Reset Animal</button>
+
+<!--   <button id="zoomOutButton">Zoom Out</button> <!-- Button to trigger zooming out -->
+  <svg id="map" width="800" height="500"></svg>
+  <div id="popup" class="popup"></div>
+  <div id="info-box"></div>
+  
+  <script>
+    const svg = d3.select("#map"),
+          width = +svg.attr("width"),
+          height = +svg.attr("height"),
+          popup = d3.select("#popup");
+    
+    // Adjust the scale and translation of the projection
+    const projection = d3.geoAlbersUsa()
+                        .translate([width / 2, height / 2])
+                        .scale([width]);
+
+    const path = d3.geoPath().projection(projection);
+
+    // Load the JSON file containing the states data
+    d3.json("counties-albers-10m.json").then(us => {
+      const path = d3.geoPath();
+
+      // Bind counties data to paths
+      const counties = svg.selectAll(".county")
+        .data(topojson.feature(us, us.objects.counties).features)
+        .enter().append("path")
+          .attr("class", "county")
+          .attr("d", path)
+          .each(function(d) { 
+            d3.select(this).append("title").text(d => `State: ${d.properties.state}\nCounty: ${d.properties.name}`);
+          });
+      
+      // Bind states data to paths
+      svg.selectAll(".state")
+        .data(topojson.feature(us, us.objects.states).features)
+        .enter().append("path")
+          .attr("class", "state")
+          .attr("d", path)
+          .each(function(d) {
+            d3.select(this).append("title").text(d => `State: ${d.properties.name}`);
+          });
+    });
+  </script>
+</body>
+</html>

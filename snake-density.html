@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+  <title>US State Data Heatmap Snake</title>
+  <style>
+    body {
+      height: 100vh;
+      background-color: #2f5597;
+      position: relative;
+      margin: 0;
+      flex-direction: column;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Comic Neue', cursive;
+      font-weight: bold;
+      color: #fff;
+      font-size: 20px;
+    }
+    .states {
+      fill: none;
+      stroke: #fff;
+      stroke-linejoin: round;
+    }
+    .legend {
+      font-size: 13px;
+      position: absolute;
+      right: 30px;
+      top: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-weight: bold;
+    }
+    .legend-box {
+      width: 20px;
+      height: 20px;
+      border: 1px solid #fff;
+    }
+    .label {
+      margin: 5px 0;
+    }
+    .year-bar {
+      position: absolute;
+      right: 40px;
+      top: 20px;
+      width: 300px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .year-slider {
+      width: 100%;
+      background-color: #C8A2C8;
+    }
+    
+    .year-label {
+      position: absolute;
+      top: -10px;
+      transform: translateX(-50%);
+      font-size: 15px;
+      text-align: center;
+    }
+
+  </style>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/topojson.v3.min.js"></script>
+</head>
+<body>
+  <svg id="us-map" width="975" height="610"></svg>
+  <div class="legend">
+    <div class="label">Low Density</div>
+    <!-- Legend boxes will be added dynamically -->
+    <div class="label">High Density</div>
+  </div>
+  <div class="year-bar">
+    <input type="range" class="year-slider" min="2005" max="2021" step="4" value="2021" list="years" onchange="changeYear(this.value)">
+    <datalist id="years">
+        <option value="2005">2005</option>
+        <option value="2009">2009</option>
+        <option value="2013">2013</option>
+        <option value="2017">2017</option>
+        <option value="2021">2021</option>
+      </datalist>
+      <div class="year-labels">
+        <span class="year-label" style="left: 0%;">2005</span>
+        <span class="year-label" style="left: 25%;">2009</span>
+        <span class="year-label" style="left: 50%;">2013</span>
+        <span class="year-label" style="left: 75%;">2017</span>
+        <span class="year-label" style="left: 100%;">2021</span>
+      </div>
+  </div>
+
+  <script>
+    let currentYear = 2021; // Default year
+    
+    const data = {
+        2021: {
+            "Alabama": 324397, "Alaska": 103045, "Arizona": 190345, "Arkansas": 198420, "California": 264295,
+            "Colorado": 167203, "Connecticut": 192034, "Delaware": 152340, "Florida": 186234, "Georgia": 139842,
+            "Hawaii": 103594, "Idaho": 138295, "Illinois": 159230, "Indiana": 198342, "Iowa": 120894,
+            "Kansas": 120394, "Kentucky": 190328, "Louisiana": 120394, "Maine": 190348, "Maryland": 139402,
+            "Massachusetts": 120348, "Michigan": 138209, "Minnesota": 139402, "Mississippi": 194830, "Missouri": 190834,
+            "Montana": 102398, "Nebraska": 183092, "Nevada": 134809, "New Hampshire": 109832, "New Jersey": 189023,
+            "New Mexico": 109482, "New York": 189234, "North Carolina": 139402, "North Dakota": 103948, "Ohio": 184039,
+            "Oklahoma": 190483, "Oregon": 192034, "Pennsylvania": 130482, "Rhode Island": 103984, "South Carolina": 192038,
+            "South Dakota": 190832, "Tennessee": 198420, "Texas": 230492, "Utah": 109834, "Vermont": 190382,
+            "Virginia": 198230, "Washington": 202834, "West Virginia": 103948, "Wisconsin": 202384, "Wyoming": 192084
+        },
+        2017: {
+            "Alabama": 324397, "Alaska": 103045, "Arizona": 195000, "Arkansas": 198420, "California": 264295,
+            "Colorado": 167203, "Connecticut": 192034, "Delaware": 152340, "Florida": 186234, "Georgia": 139842,
+            "Hawaii": 100000, "Idaho": 138295, "Illinois": 159230, "Indiana": 200000, "Iowa": 120894,
+            "Kansas": 120394, "Kentucky": 300000, "Louisiana": 120394, "Maine": 190348, "Maryland": 139402,
+            "Massachusetts": 120348, "Michigan": 138209, "Minnesota": 150000, "Mississippi": 194830, "Missouri": 190834,
+            "Montana": 102398, "Nebraska": 183092, "Nevada": 134809, "New Hampshire": 250000, "New Jersey": 189023,
+            "New Mexico": 300000, "New York": 189234, "North Carolina": 280000, "North Dakota": 103948, "Ohio": 184039,
+            "Oklahoma": 190483, "Oregon": 192034, "Pennsylvania": 130482, "Rhode Island": 103984, "South Carolina": 192038,
+            "South Dakota": 190832, "Tennessee": 198420, "Texas": 230492, "Utah": 109834, "Vermont": 190382,
+            "Virginia": 198230, "Washington": 202834, "West Virginia": 103948, "Wisconsin": 202384, "Wyoming": 192084
+        },
+        2013: {
+    "Alabama": 324397, "Alaska": 103045, "Arizona": 195000, "Arkansas": 198420, "California": 264295,
+    "Colorado": 167203, "Connecticut": 192034, "Delaware": 152340, "Florida": 300000, "Georgia": 139842,
+    "Hawaii": 100000, "Idaho": 138295, "Illinois": 159230, "Indiana": 200000, "Iowa": 120894,
+    "Kansas": 120394, "Kentucky": 300000, "Louisiana": 120394, "Maine": 190348, "Maryland": 139402,
+    "Massachusetts": 120348, "Michigan": 138209, "Minnesota": 150000, "Mississippi": 194830, "Missouri": 190834,
+    "Montana": 102398, "Nebraska": 183092, "Nevada": 134809, "New Hampshire": 250000, "New Jersey": 189023,
+    "New Mexico": 300000, "New York": 189234, "North Carolina": 280000, "North Dakota": 103948, "Ohio": 184039,
+    "Oklahoma": 190483, "Oregon": 192034, "Pennsylvania": 130482, "Rhode Island": 103984, "South Carolina": 192038,
+    "South Dakota": 190832, "Tennessee": 198420, "Texas": 230492, "Utah": 109834, "Vermont": 190382,
+    "Virginia": 198230, "Washington": 202834, "West Virginia": 103948, "Wisconsin": 202384, "Wyoming": 192084
+},
+        2009: {
+            'Alabama': 275000, 'Alaska': 89000, 'Arizona': 180000, 'Arkansas': 210000, 'California': 1040000,
+            'Colorado': 305000, 'Connecticut': 132000, 'Delaware': 89000, 'Florida': 740000, 'Georgia': 365000,
+            'Hawaii': 89000, 'Idaho': 210000, 'Illinois': 365000, 'Indiana': 275000, 'Iowa': 305000,
+            'Kansas': 275000, 'Kentucky': 180000, 'Louisiana': 180000, 'Maine': 132000, 'Maryland': 132000,
+            'Massachusetts': 180000, 'Michigan': 365000, 'Minnesota': 365000, 'Mississippi': 180000, 'Missouri': 210000,
+            'Montana': 305000, 'Nebraska': 275000, 'Nevada': 132000, 'New Hampshire': 89000, 'New Jersey': 275000,
+            'New Mexico': 132000, 'New York': 415000, 'North Carolina': 365000, 'North Dakota': 305000, 'Ohio': 365000,
+            'Oklahoma': 180000, 'Oregon': 305000, 'Pennsylvania': 415000, 'Rhode Island': 89000, 'South Carolina': 275000,
+            'South Dakota': 305000, 'Tennessee': 275000, 'Texas': 935000, 'Utah': 180000, 'Vermont': 132000,
+            'Virginia': 305000, 'Washington': 365000, 'West Virginia': 132000, 'Wisconsin': 365000, 'Wyoming': 180000
+        },
+        2005: {
+            'Alabama': 270000, 'Alaska': 88000, 'Arizona': 175000, 'Arkansas': 205000, 'California': 1020000,
+            'Colorado': 300000, 'Connecticut': 130000, 'Delaware': 88000, 'Florida': 735000, 'Georgia': 360000,
+            'Hawaii': 88000, 'Idaho': 205000, 'Illinois': 360000, 'Indiana': 270000, 'Iowa': 300000,
+            'Kansas': 270000, 'Kentucky': 175000, 'Louisiana': 175000, 'Maine': 130000, 'Maryland': 130000,
+            'Massachusetts': 175000, 'Michigan': 360000, 'Minnesota': 360000, 'Mississippi': 175000, 'Missouri': 205000,
+            'Montana': 300000, 'Nebraska': 270000, 'Nevada': 130000, 'New Hampshire': 88000, 'New Jersey': 270000,
+            'New Mexico': 130000, 'New York': 410000, 'North Carolina': 360000, 'North Dakota': 300000, 'Ohio': 360000,
+            'Oklahoma': 175000, 'Oregon': 300000, 'Pennsylvania': 410000, 'Rhode Island': 88000, 'South Carolina': 270000,
+            'South Dakota': 300000, 'Tennessee': 270000, 'Texas': 930000, 'Utah': 175000, 'Vermont': 130000,
+            'Virginia': 300000, 'Washington': 360000, 'West Virginia': 130000, 'Wisconsin': 360000, 'Wyoming': 175000
+        }
+    };
+
+    function changeYear(year) {
+        currentYear = year;
+        updateMap();
+    }
+
+    function updateMap() {
+        const svg = d3.select("#us-map");
+        const colorScale = d3.scaleQuantize()
+        .domain([0, d3.max(Object.values(data[currentYear]))])
+        .range(d3.schemeBuGn[9]);
+
+            
+        svg.selectAll("path")
+            .attr("fill", d => colorScale(data[currentYear][d.properties.name] || 0));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const svg = d3.select("#us-map"),
+            width = +svg.attr("width"),
+            height = +svg.attr("height");
+
+        d3.json("counties-albers-10m.json").then(us => {
+            svg.append("g")
+                .selectAll("path")
+                .data(topojson.feature(us, us.objects.states).features)
+                .enter().append("path")
+                .attr("class", "state")
+                .attr("fill", "#ccc")
+                .attr("stroke", "#fff")
+                .attr("stroke-linejoin", "round")
+                .attr("d", d3.geoPath())
+                .append("title")
+                .text(d => d.properties.name);
+
+            svg.append("path")
+                .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+                .attr("class", "states")
+                .attr("d", d3.geoPath());
+            
+            // Generate legend dynamically based on the color scale
+            const legend = d3.select(".legend");
+            const colorScale = d3.scaleQuantize()
+                .domain([0, d3.max(Object.values(data[currentYear]))])
+                .range(d3.schemeBuGn[9]);
+            
+            const numColors = 9; 
+            
+            for (let i = 0; i < numColors; i++) {
+                legend.insert("div", ".label:last-child")
+                    .attr("class", "legend-box")
+                    .style("background-color", colorScale((i / (numColors - 1)) * d3.max(Object.values(data[currentYear]))))
+                    .style("top", `${i * 21}px`);
+            }
+
+            updateMap();
+        });
+    });
+  </script>
+</body>
+</html>

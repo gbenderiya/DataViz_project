@@ -1,0 +1,166 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Weight Line Plot in D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      text {
+        fill: white;
+        font-size: 12px;
+        font-family: 'Neue', sans-serif;
+      }
+      .tick text {
+        fill: white;
+      }
+      .axis text {
+          font-size: 10px; 
+      }
+      path.domain {
+        stroke: white;
+      }
+      .tick line,
+      .domain {
+        stroke: white;
+      }
+
+      .tooltip {
+          position: absolute;
+          text-align: center;
+          width: 100px;
+          height: auto;
+          padding: 8px;
+          font-weight: bold;
+          font-size: 14px;
+          background: lightgray;
+          border: 0px;
+          border-radius: 8px;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.6s;
+      }
+
+    </style>
+  </head>
+  <body>
+    <svg width="350" height="200"></svg>
+
+    <script>
+      const svg = d3.select("svg");
+      const margin = { top: 25, right: 20, bottom: 40, left: 50 };
+      const width = +svg.attr("width") - margin.left - margin.right;
+      const height = +svg.attr("height") - margin.top - margin.bottom;
+      const g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // The data
+      const data = [
+      { age: 1, weight: 150 },
+        { age: 2, weight: 170 },
+        { age: 3, weight: 180 },
+        { age: 4, weight: 280 },
+        { age: 5, weight: 380 },
+        { age: 6, weight: 480 },
+        { age: 7, weight: 580 },
+        { age: 8, weight: 675 },
+        { age: 9, weight: 750 },
+        { age: 10, weight: 850 },
+        { age: 11, weight: 950 },
+        { age: 12, weight: 1100 },
+        { age: 18, weight: 1800 },
+        { age: 24, weight: 2000 },
+        { age: 30, weight: 2200 },
+        { age: 36, weight: 2400 }
+      ];
+
+      // Scales
+      const x = d3.scaleLinear()
+        .rangeRound([0, width])
+        .domain(d3.extent(data, function(d) { return d.age; }));
+      const y = d3.scaleLinear()
+        .rangeRound([height, 0])
+        .domain([0, d3.max(data, function(d) { return d.weight; })]);
+
+      // Line generator
+      const line = d3.line()
+        .x(function(d) { return x(d.age); })
+        .y(function(d) { return y(d.weight); });
+
+      // Tooltips
+      const tooltip = d3.select("body").append("div")
+                          .attr("class", "tooltip");
+
+      // Axes
+      g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x))
+      .append("text")
+      .attr("fill", "#fff")
+      .attr("y", 35)
+      .attr("x", width / 2)
+      .attr("text-anchor", "middle")
+      .text("Month");
+
+      // Y-axis with ticks at intervals of 800
+      g.append("g")
+      .call(d3.axisLeft(y).tickValues(d3.range(0, d3.max(data, d => d.weight) + 800, 800))) // Sets custom tick values
+      .append("text")
+      .attr("fill", "#fff")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .attr("text-anchor", "end")
+      .text("Weight (grams)");
+
+      // Data line with animation
+      const path = g.append("path")
+                      .datum(data)
+                      .attr("fill", "none")
+                      .attr("stroke", "#00ff00")
+                      .attr("stroke-width", 2.5)
+                      .attr("d", line);
+      const totalLength = path.node().getTotalLength();
+
+      path.attr("stroke-dasharray", totalLength + " " + totalLength)
+        .attr("stroke-dashoffset", totalLength)
+        .transition()
+        .duration(1500)
+        .ease(d3.easeLinear)
+        .attr("stroke-dashoffset", 0);
+
+      // Title
+      svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", margin.top / 2+1)
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        .style("text-decoration", "underline")  
+        .style("fill", "white")
+        .style("font-weight", "bold")
+        .text("How heavy is the snake?");
+      
+      // Event listeners for the tooltip
+      g.selectAll("circle")
+      .data(data)
+      .enter().append("circle")
+      .attr("r", 4)
+      .attr("fill", "#00ff00")
+      .attr("cx", d => x(d.age))
+      .attr("cy", d => y(d.weight))
+      .style("opacity", 0)
+      .transition()
+      .delay(1500) 
+      .style("opacity", 1) 
+      .on("mouseover", function(event, d) {
+        const tooltipX = x(d.age) + margin.left; 
+        const tooltipY = y(d.weight) + margin.top;
+          tooltip.html(`Age: ${d.age} months <br> Weight: ${d.weight}g`)
+                .style("left", `${tooltipX}px`)
+                .style("top", `${tooltipY}px`)
+                .style("opacity", 1);
+      })
+      .on("mouseout", () => tooltip.style("opacity", 0));
+
+    </script>
+  </body>
+  </html>

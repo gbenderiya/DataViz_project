@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intelligence Order Treemap in D3.js</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    text {
+      font-weight: bold;
+      font-family: 'Neue', sans-serif;
+    }
+    .tick text {
+      fill: white;
+    }
+    path.domain {
+      stroke: white;
+    }
+    .tick line,
+    .domain {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <svg width="350" height="250"></svg>
+
+  <script>
+    const svg = d3.select("svg");
+    const margin = { top: 20, right: 20, bottom: 60, left: 50 };
+    const width = +svg.attr("width") - margin.left - margin.right;
+    const height = +svg.attr("height") - margin.top - margin.bottom;
+    const g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // The data
+    const data = [
+      { name: "Western Pond Turtle", order: 90 },
+      { name: "Painted Turtle", order: 85 },
+      { name: "Red-eared Slider", order: 80 },
+      { name: "Snapping Turtle", order: 75 },
+      { name: "Box Turtle", order: 70 },
+      { name: "Spotted Turtle", order: 65 },
+      { name: "Blanding's Turtle", order: 60 },
+      { name: "Diamondback Terrapin", order: 55 },
+      { name: "Wood Turtle", order: 50 },
+      { name: "Mud Turtle", order: 45 }
+    ];
+
+    // Treemap layout
+    const treemap = d3.treemap()
+      .size([width, height])
+      .padding(1)
+      .round(true);
+
+    const root = d3.hierarchy({ children: data })
+      .sum(d => d.order) // Summarize based on order
+      .sort((a, b) => b.value - a.value);
+
+    treemap(root);
+
+    // Rectangles
+    const cell = g.selectAll("g")
+      .data(root.leaves())
+      .enter().append("g")
+      .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+    cell.append("rect")
+    .attr("width", 0) // Start with width 0
+    .attr("height", 0) // Start with height 0
+    .attr("fill", "rgb(104, 114, 60)")
+    .transition() // Add transition
+    .duration(1000) // Duration of transition (1 second)
+    .attr("width", d => d.x1 - d.x0) // Transition to final width
+    .attr("height", d => d.y1 - d.y0); // Transition to final height
+
+    // Text
+    cell.append("foreignObject")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", d => d.x1 - d.x0) // Set initial width to match final width of rectangle
+    .attr("height", d => d.y1 - d.y0) // Set initial height to match final height of rectangle
+    .append("xhtml:div")
+    .style("width", d => (d.x1 - d.x0) + "px")
+    .style("height", d => (d.y1 - d.y0) + "px")
+    .style("font-size", "12px")
+    .style("text-align", "center")
+    .style("overflow", "hidden")
+    .style("word-wrap", "break-word")
+    .style("color", "white")
+    .style("font-weight", "bold")
+    .style("font-family", "'Neue', sans-serif")
+    .html(d => d.data.name)
+    .transition()
+    .duration(1000)
+    .style("width", d => (d.x1 - d.x0) + "px")
+    .style("height", d => (d.y1 - d.y0) + "px");
+
+    // Title
+    svg.append("text")
+        .attr("x", width /1.5)             
+        .attr("y", margin.top / 2 +2)
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        .style("text-decoration", "underline")  
+        .style("fill", "white")
+        .style("font-weight", "bold")
+        .style("font-family", "'Neue', sans-serif")
+        .text("Intelligence Order");
+
+  </script>
+</body>
+</html>
