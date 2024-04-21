@@ -45,23 +45,44 @@
     }
     .year-bar {
       position: absolute;
-      right: 40px;
+      left: 20px; /* Move to the left side */
       top: 20px;
-      width: 350px;
+      height: 300px; /* Set a fixed height */
       padding: 10px;
       border-radius: 5px;
+      display: flex;
+      flex-direction: column; /* Change to column to stack elements vertically */
+      justify-content: center;
+      align-items: center;
     }
     .year-slider {
-      width: 100%;
-      background-color: #C8A2C8;
+      -webkit-appearance: slider-vertical; /* Make slider vertical */
+      appearance: slider-vertical;
+      writing-mode: bt-lr; /* Internet Explorer support for vertical slider */
+      height: 100%; /* Extend the slider to fill the container */
+      width: 20px;
     }
-    
-    .year-label {
+
+    .year-labels {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      height: 300px; /* This should match the height of your .year-bar */
       position: absolute;
-      top: -10px;
-      transform: translateX(-50%);
-      font-size: 15px;
+      left: 45px; /* Adjust as necessary to align with the slider */
+      top: 10px; /* Align with the top of the slider */
+      bottom: 20px;
+      justify-content: space-between;
+    }
+
+    .year-label {
+      position: static;
+      font-size: 13px;
+      transform: none;
+      writing-mode: horizontal-tb;
+      margin: 0; /* Reset any margins that may affect positioning */
       text-align: center;
+      width: 100%; /* Make sure labels take full width for correct alignment */
     }
 
   </style>
@@ -69,14 +90,14 @@
   <script src="https://d3js.org/topojson.v3.min.js"></script>
 </head>
 <body>
-  <svg id="us-map" width="975" height="610"></svg>
+  <svg id="us-map" width="800" height="600" viewBox="0 0 900 700"></svg>
   <div class="legend">
     <div class="label">Low Density</div>
     <!-- Legend boxes will be added dynamically -->
     <div class="label">High Density</div>
   </div>
   <div class="year-bar">
-    <input type="range" class="year-slider" min="2014" max="2022" step="2" value="2022" list="years" onchange="changeYear(this.value)">
+    <input type="range" class="year-slider" min="2014" max="2022" step="2" value="2022" list="years" orient="vertical" onchange="changeYear(this.value)">
     <datalist id="years">
         <option value="2014">2014</option>
         <option value="2016">2016</option>

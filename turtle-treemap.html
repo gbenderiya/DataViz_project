@@ -7,7 +7,7 @@
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     text {
-      font-weight: bold;
+      font-weight: normal;
       font-family: 'Neue', sans-serif;
     }
     .tick text {
@@ -23,11 +23,11 @@
   </style>
 </head>
 <body>
-  <svg width="350" height="250"></svg>
+  <svg width="350" height="260"></svg>
 
   <script>
     const svg = d3.select("svg");
-    const margin = { top: 20, right: 20, bottom: 60, left: 50 };
+    const margin = { top: 40, right: 20, bottom: 60, left: 50 };
     const width = +svg.attr("width") - margin.left - margin.right;
     const height = +svg.attr("height") - margin.top - margin.bottom;
     const g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -49,7 +49,7 @@
     // Treemap layout
     const treemap = d3.treemap()
       .size([width, height])
-      .padding(1)
+      .padding(7)
       .round(true);
 
     const root = d3.hierarchy({ children: data })
@@ -87,7 +87,7 @@
     .style("overflow", "hidden")
     .style("word-wrap", "break-word")
     .style("color", "white")
-    .style("font-weight", "bold")
+    .style("font-weight", "normal")
     .style("font-family", "'Neue', sans-serif")
     .html(d => d.data.name)
     .transition()
@@ -98,14 +98,14 @@
     // Title
     svg.append("text")
         .attr("x", width /1.5)             
-        .attr("y", margin.top / 2 +2)
+        .attr("y", margin.top / 2+5)
         .attr("text-anchor", "middle")  
         .style("font-size", "16px") 
         .style("text-decoration", "underline")  
         .style("fill", "white")
         .style("font-weight", "bold")
         .style("font-family", "'Neue', sans-serif")
-        .text("Intelligence Order");
+        .text("The most intelligent turtle species");
 
   </script>
 </body>

@@ -62,11 +62,11 @@
 
     .blank-square {
       position: absolute; 
-      top: 30%; 
-      left: 24%;
+      top: 32%; 
+      left: 28%;
       transform: translate(-50%, -50%); /* Center the transformation */
       width: 130px;
-      height: 130px;
+      height: 120px;
       border: 5px solid white;
       border-radius: 25px;
     }
@@ -115,7 +115,7 @@
     h1 {
       font-family: 'Comic Neue', cursive;
       color: #FF4E50;
-      font-size: 3em;
+      font-size: 3.5em;
       text-shadow: 2px 2px #444; 
       margin: 0; 
       flex-grow: 1;
@@ -124,11 +124,11 @@
 
     #map {
       position: absolute;
-      top: 55%; 
-      left: calc(100px + 50px + 275px + 80px);
+      top: 65%; 
+      left: calc(200px + 50px + 275px + 80px);
       transform: translateY(-50%); 
-      width: 975px; 
-      height: 610px; 
+      width: 850px; 
+      height: 450px; 
       z-index: 1; 
     }
 
@@ -138,6 +138,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       let lastDraggedImage = null;
+      let dropZoneOccupied = false;
 
       const originalPositions = {
           'ladybug': { top: '10%', left: '5%' },
@@ -147,7 +148,6 @@
       };
       const animalImages = document.querySelectorAll('.animal-images img');
       const dropZone = document.querySelector('.blank-square');
-      const snakeFrame = document.getElementById('snakeFrame');
 
       // Store initial positions
       animalImages.forEach(img => {
@@ -157,58 +157,80 @@
       });
 
       function handleDragStart(e) {
-        lastDraggedImage = e.target;
-        e.dataTransfer.setData('text/plain', e.target.id);
+        if (dropZoneOccupied) {
+          e.preventDefault();  // Prevent drag if drop zone is occupied
+        } else {
+          document.getElementById('dropZoneText').style.display = 'none'; // Hide the text
+          lastDraggedImage = e.target;
+          e.dataTransfer.setData('text/plain', e.target.id);
+        }
       }
 
       function handleDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
+        if (!dropZoneOccupied) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        }
       }
 
         function handleDrop(e) {
+        if (!dropZoneOccupied) {
             e.preventDefault();
             const id = e.dataTransfer.getData('text/plain');
             const draggableElement = document.getElementById(id);
-
+            
             const dropRect = dropZone.getBoundingClientRect();
             const imgRect = draggableElement.getBoundingClientRect();
+            dropZoneOccupied = true;
 
             // Calculate position as a percentage of the drop zone dimensions
-            const desiredTop = dropRect.top + dropRect.height * -0.45;
+            const desiredTop = dropRect.top + dropRect.height * -0.6;
             const desiredLeft = dropRect.left + dropRect.width * 0.10;
 
             // Set the image to be at the calculated position
             draggableElement.style.position = 'absolute';
             draggableElement.style.left = `${desiredLeft}px`;
             draggableElement.style.top = `${desiredTop}px`;
-
-            // Check if there's a lastDraggedImage and it's not the current one
-            if (lastDraggedImage && lastDraggedImage !== draggableElement) {
-                lastDraggedImage.style.position = 'absolute';
-                lastDraggedImage.style.left = `${imagePositions[lastDraggedImage.id].x}px`;
-                lastDraggedImage.style.top = `${imagePositions[lastDraggedImage.id].y}px`;
-                lastDraggedImage.classList.remove('inside-square');
+            
+            // Update lastDraggedImage to the currently dropped image
+            lastDraggedImage = draggableElement;
+            
+            // Display the relevant iframe based on the image ID
+            switch (id) {
+                case 'snake':
+                    snakeFrame.style.display = 'block';
+                    snakeDensityFrame.style.display = 'block';
+                    snakeVideoFrame.style.display = 'block';
+                    snakeFrame.src = snakeFrame.src;
+                    snakeDensityFrame.src = snakeDensityFrame.src;
+                    snakeVideoFrame.src = snakeVideoFrame.src;
+                    break;
+                case 'ladybug':
+                    ladyBugDensityFrame.style.display = 'block';
+                    LadybugFrame.style.display = 'block';
+                    ladybugVideoFrame.style.display = 'block';
+                    LadybugFrame.src = LadybugFrame.src;
+                    ladybugVideoFrame.src = ladybugVideoFrame.src;
+                    ladyBugDensityFrame.src = ladyBugDensityFrame.src;
+                    break;
+                case 'bee':
+                    beeDensityFrame.style.display = 'block';
+                    beeBarFrame.style.display = 'block';
+                    beeVideoFrame.style.display = 'block';
+                    beeBarFrame.src = beeBarFrame.src;
+                    beeDensityFrame.src = beeDensityFrame.src;
+                    beeVideoFrame.src = beeVideoFrame.src;
+                    break;
+                case 'turtle':
+                    turtleTreemapFrame.style.display = 'block';
+                    turtleDensityFrame.style.display = 'block';
+                    turtleVideoFrame.style.display = 'block';
+                    turtleTreemapFrame.src = turtleTreemapFrame.src;    
+                    turtleDensityFrame.src = turtleDensityFrame.src;
+                    turtleVideoFrame.src = turtleVideoFrame.src;
+                    break;
             }
-
-            // Show the iframe if the dropped image is the snake
-            if (id === 'snake') {
-                snakeFrame.style.display = 'block';
-                snakeDensityFrame.style.display = 'block';
-                snakeFrame.src = snakeFrame.src;
-            } else if (id === 'ladybug'){
-                ladyBugDensityFrame.style.display = 'block';
-                LadybugFrame.style.display = 'block';
-                LadybugFrame.src = LadybugFrame.src;
-            } else if (id === 'bee'){
-                beeDensityFrame.style.display = 'block';
-                beeBarFrame.style.display = 'block';
-                beeBarFrame.src = beeBarFrame.src;
-            } else if (id === 'turtle'){
-                turtleTreemapFrame.style.display = 'block';
-                turtleDensityFrame.style.display = 'block';
-                turtleTreemapFrame.src = turtleTreemapFrame.src;
-            }
+          }
         }
 
       dropZone.addEventListener('dragover', handleDragOver);
@@ -222,6 +244,8 @@
           img.style.left = originalPositions[img.id].left;
           img.classList.remove('inside-square'); 
         });
+        dropZoneOccupied = false; 
+        
         snakeFrame.style.display = 'none';
         LadybugFrame.style.display = 'none';
         beeBarFrame.style.display = 'none';
@@ -230,6 +254,16 @@
         ladyBugDensityFrame.style.display = 'none';
         snakeDensityFrame.style.display = 'none';
         turtleDensityFrame.style.display = 'none';
+        beeVideoFrame.style.display = 'none';
+        snakeVideoFrame.style.display = 'none';
+        turtleVideoFrame.style.display = 'none';
+        ladybugVideoFrame.style.display = 'none';
+        snakeVideoFrame.src = snakeVideoFrame.src;
+        ladybugVideoFrame.src = ladybugVideoFrame.src;
+        beeVideoFrame.src = beeVideoFrame.src;
+        turtleVideoFrame.src = turtleVideoFrame.src;
+
+        document.getElementById('dropZoneText').style.display = 'block'; // Show the text again
 
       }
       // Event listener for the reset button
@@ -242,6 +276,12 @@
   <header>
     <h1>Animal visualizations in action</h1>
   </header>
+  <div>
+    <img src="img/cat-screenshot.png" style="height: 200px; position: absolute; top: 0px; right: 10px;" alt="Cat Data Visualization">
+  </div>
+  <div id="dropZoneText" style="position: absolute; left: 26.2%; top: 25.5%; font-family: 'Comic Neue', cursive; font-size: 20px; color: white; font-weight: bold; text-align: center;">
+    Drag<br>an<br>animal<br>here
+  </div>  
   <!-- Animal images -->
   <div class="animal-images">
     <img src="img/ladybug.png" id="ladybug" alt="Ladybug" draggable="true">
@@ -249,20 +289,23 @@
     <img src="img/snake.png" id="snake" alt="Snake" draggable="true">
     <img src="img/turtle.png" id="turtle" alt="Turtle" draggable="true">
   </div>
-  <iframe id="snakeFrame" src="snake-line.html" style="width: 70vw; height: 40vh; position: absolute; top: 335px; left: 200px; border:none; display:none;"></iframe>
-  <iframe id="LadybugFrame" src="ladybug-pie.html" style="width: 60vw; height: 40vh; position: absolute; top: 350px; left: 200px; border:none;display:none;"></iframe>
-  <iframe id="beeBarFrame" src="bee-bar.html" style="width: 60vw; height: 40vh; position: absolute; top: 350px; left: 155px; border:none;display:none;"></iframe>
-  <iframe id="turtleTreemapFrame" src="turtle-treemap.html" style="width: 60vw; height: 40vh; position: absolute; top: 350px; left: 155px; border:none;display:none;"></iframe>
-  <iframe id="beeDensityFrame" src="bee-density.html" style="width: 975px; height: 610px; position: absolute; top: 11%; left: calc(100px + 60px + 260px + 80px); z-index: 2000; border:none;display:none;"></iframe>
-  <iframe id="ladyBugDensityFrame" src="ladybug-density.html" style="width: 975px; height: 610px; position: absolute; top: 11%; left: calc(100px + 60px + 260px + 80px); z-index: 2000; border:none;display:none;"></iframe>
-  <iframe id="snakeDensityFrame" src="snake-density.html" style="width: 975px; height: 610px; position: absolute; top: 11%; left: calc(100px + 60px + 260px + 80px); z-index: 2000; border:none;display:none;"></iframe>
-  <iframe id="turtleDensityFrame" src="turtle-density.html" style="width: 975px; height: 610px; position: absolute; top: 11%; left: calc(100px + 60px + 260px + 80px); z-index: 2000; border:none;display:none;"></iframe>
+  <iframe id="snakeFrame" src="snake-line.html" style="width: 70vw; height: 40vh; position: absolute; top: 380px; left: 230px; border:none; display:none;"></iframe>
+  <iframe id="LadybugFrame" src="ladybug-pie.html" style="width: 60vw; height: 40vh; position: absolute; top: 380px; left: 260px; border:none;display:none;"></iframe>
+  <iframe id="beeBarFrame" src="bee-bar.html" style="width: 60vw; height: 40vh; position: absolute; top: 370px; left: 220px; border:none;display:none;"></iframe>
+  <iframe id="turtleTreemapFrame" src="turtle-treemap.html" style="width: 60vw; height: 40vh; position: absolute; top: 380px; left: 220px; border:none;display:none;"></iframe>
+  <iframe id="beeDensityFrame" src="bee-density.html" style="width: 800px; height: 450px; position: absolute; top: 34%; left: calc(225px + 50px + 275px + 80px); z-index: 2000; border:none;display:none;"></iframe>
+  <iframe id="ladyBugDensityFrame" src="ladybug-density.html" style="width: 800px; height: 450px; position: absolute; top: 34%; left: calc(225px + 50px + 275px + 80px); z-index: 2000; border:none;display:none;"></iframe>
+  <iframe id="snakeDensityFrame" src="snake-density.html" style="width: 800px; height: 450px; position: absolute; top: 34%; left: calc(225px + 50px + 275px + 80px); z-index: 2000; border:none;display:none;"></iframe>
+  <iframe id="turtleDensityFrame" src="turtle-density.html" style="width: 800px; height: 450px; position: absolute; top: 34%; left: calc(225px + 50px + 275px + 80px); z-index: 2000; border:none;display:none;"></iframe>
+  <iframe id="beeVideoFrame" src="https://drive.google.com/file/d/1q8fWCZJnMh72J_4nr866L-B-6s00h3Z2/preview" allow="autoplay" style="width: 390px; height: 219px; position: absolute; top: 10px; right: 10px;display:none;" allowfullscreen></iframe>
+  <iframe id="snakeVideoFrame" src="https://drive.google.com/file/d/1rQNvdmolukQDAAXfQ3eAZXm_16drkbs5/preview" allow="autoplay" style="width: 390px; height: 219px; position: absolute; top: 10px; right: 10px;display:none;" allowfullscreen></iframe>
+  <iframe id="turtleVideoFrame" src="https://drive.google.com/file/d/1h2BQjNScygqVfNV_Ms1mBwF0FOqHNPVn/preview" allow="autoplay" style="width: 390px; height: 219px; position: absolute; top: 10px; right: 10px;display:none;" allowfullscreen></iframe>
+  <iframe id="ladybugVideoFrame" src="https://drive.google.com/file/d/188uwFgI091zp0h2AYKqFk2LcKpDmksqa/preview" allow="autoplay" style="width: 390px; height: 219px; position: absolute; top: 10px; right: 10px;display:none;" allowfullscreen></iframe>
   
   <div class="blank-square"></div>
-  <button id="resetButton" class="styled-button" style="position: absolute; left: 24%; transform: translateX(-50%); top: 40%;">Reset Animal</button>
-
-<!--   <button id="zoomOutButton">Zoom Out</button> <!-- Button to trigger zooming out -->
-  <svg id="map" width="800" height="500"></svg>
+  <button id="resetButton" class="styled-button" style="position: absolute; left: 28%; transform: translateX(-50%); top: 41%;">Reset Animal</button>
+  
+  <svg id="map" width="800" height="600" viewBox="0 0 900 700"></svg>
   <div id="popup" class="popup"></div>
   <div id="info-box"></div>
   
@@ -275,7 +318,7 @@
     // Adjust the scale and translation of the projection
     const projection = d3.geoAlbersUsa()
                         .translate([width / 2, height / 2])
-                        .scale([width]);
+                        .scale([height]);
 
     const path = d3.geoPath().projection(projection);
 

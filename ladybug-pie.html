@@ -82,7 +82,7 @@
       .attr("fill", d => color(d.data.color))
       .on('mouseover', function (event, d) {
         tooltip.transition()
-          .duration(1500)
+          .duration(500)
           .style('opacity', .9);
           tooltip.html(`<strong>Color:</strong> ${d.data.color}<br><strong>Percentage:</strong> ${Math.round((d.data.count / d3.sum(data, d => d.count) * 100))}%`) // Added <strong> tags
             .style('left', (event.pageX) + 'px')
@@ -95,7 +95,7 @@
       })
       .transition() // Simple transition to show the pie chart building
       .ease(d3.easeLinear)
-      .duration(2000)
+      .duration(1200)
       .attrTween("d", pieTween);
 
     function pieTween(b) {
