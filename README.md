@@ -1,6 +1,6 @@
 Final Project - Interactive Data Visualization
 ===
-By: Gan-Erdene Benderiya, Jingni Cai, Ester Jere, Antonela Tamagnini
+By: Gan-Erdene Benderiya, Jingni Cai, Antonela Tamagnini, Ester Jere
 <bk>
 
 Hi, there :wave:
